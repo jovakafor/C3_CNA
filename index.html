@@ -109,7 +109,7 @@ var TT=A.map(function(a,i){return a+K[i]}),avg=Math.round(sum(rs,function(x){ret
 return tabs+'<div class="stats"><div class="stat"><b>'+n(maxAtt(cid))+'</b><span>Highest attendance ever</span></div><div class="stat"><b>'+n(avg)+'</b><span>Average per Sunday</span></div><div class="stat"><b>'+rs.length+'</b><span>Sundays reported</span></div><div class="stat"><b>'+cu[1]+' '+sh(sum(rs,function(x){return x.o})*.03)+'</b><span>Levy in this period</span></div></div>'
 +'<div class="card"><h3>People at church</h3><div class="mu">Adults and children together'+(p=="y"?'. Average per Sunday in each month.':'.')+'</div>'+bars(L,TT,C1)+best(L,TT,p=="y"?"best month":"best Sunday")+'<div class="mu">On average: '+n(aA)+' adults and '+n(aK)+' children</div></div>'
 +'<div class="card"><h3>Offering ('+cu[1]+')</h3><div class="mu">'+(p=="y"?'Total for each month.':'Offering on each Sunday.')+'</div>'+bars(L,O,C1)+best(L,O,p=="y"?"best month":"best Sunday")+'</div>'
-+(host=="pnC"?'<h3 style="margin:16px 0 6px">Save my church stats</h3>'+exp():'')}
++(host=="pnC"?'<h3 style="margin:16px 0 6px">Save my church stats</h3>'+exp(cid):'')}
 /* screens */
 function render(v){var h="";
 if(v=="home")h='<h1>C3 Southern Africa</h1><p class="mu">Choose how you want to use the app.</p><button class="big b1" onclick="go(\'alogin\')"><b>Administrator</b><span>See levy and attendance for every country</span></button><button class="big b2" onclick="go(\'church\')"><b>Church Admin</b><span>Enter your church details and Sunday numbers</span></button><p class="mu">Trial version: data is saved on this phone only. No internet needed.</p>';
@@ -152,11 +152,120 @@ function stats(cn){var cs=churches.filter(function(c){return c.country==cn}),A=0
 cs.forEach(function(c){var rs=inM(c.id,THIS);if(rs.length){sub++;A+=rs[rs.length-1].a;K+=rs[rs.length-1].k}O+=sum(rs,function(x){return x.o});mx+=maxAtt(c.id);now+=churchAvg(c.id,THIS);pv+=churchAvg(c.id,PREV)});
 return{cs:cs,A:A,K:K,levy:O*.03,mx:mx,sub:sub,g:pv?Math.round((now-pv)/pv*100):null}}
 function usedCt(){return CT.filter(function(c){return churches.some(function(x){return x.country==c[0]})})}
-function exp(){return '<div class="row"><button class="btn o" onclick="dl(\'PDF\')">PDF</button><button class="btn o" onclick="dl(\'Excel\')">Excel</button><button class="btn o" onclick="dl(\'Word\')">Word</button></div>'}
+function exp(c){c=c||0;return '<div class="row"><button class="btn o" onclick="dl(\'PDF\','+c+')">PDF</button><button class="btn o" onclick="dl(\'Excel\','+c+')">Excel</button><button class="btn o" onclick="dl(\'Word\','+c+')">Word</button></div>'}
 function adminHome(){var u=usedCt(),S=u.map(function(c){return stats(c[0])});
 return '<h1>Administrator</h1><p class="mu">November 2026 · '+(isMain?'Main admin':'View only')+'</p><div class="card"><h3>People at church, by country</h3><div class="mu">Latest Sunday of the month. Adults and children together.</div>'+bars(u.map(function(c){return c[3]}),S.map(function(s){return s.A+s.K}),C1,u.map(function(c){return col(c[0])}))+'<div class="mu">'+u.map(function(c){return c[3]+" = "+c[0]}).join(", ")+'</div></div><h2>Countries</h2><input id="cs" placeholder="Search country" autocomplete="off" oninput="filt()"><div id="cl2">'+u.map(function(c,i){var s=S[i];return '<div class="card item" style="border-left:7px solid '+col(c[0])+'" data-n="'+c[0].toLowerCase()+'" onclick="sel=\''+c[0]+'\';render(\'country\')"><h3>'+c[0]+' <span class="pill">'+s.cs.length+' churches</span></h3><div class="mu">Levy owed this month</div><b style="font-size:20px">'+c[1]+' '+n(s.levy.toFixed(2))+'</b><div class="mu">'+n(s.A)+' adults · '+n(s.K)+' children</div></div>'}).join("")+'</div>'+nav(ADM,"c")}
 function filt(){var q=$("cs").value.toLowerCase();document.querySelectorAll("#cl2 .item").forEach(function(e){e.classList.toggle("hide",e.dataset.n.indexOf(q)<0)})}
-function dl(t){toast(t+" download is a placeholder in this prototype. It will make a real file in the app.")}
+/* ===== EXPORT: real PDF, Excel and Word files (no internet needed) ===== */
+var ENC=new TextEncoder();
+function u8(s){return ENC.encode(s)}
+function cat(a){var l=0;a.forEach(function(x){l+=x.length});var o=new Uint8Array(l),p=0;a.forEach(function(x){o.set(x,p);p+=x.length});return o}
+var CRCT=(function(){var t=[],c,i,k;for(i=0;i<256;i++){c=i;for(k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[i]=c>>>0}return t})();
+function crc32(u){var c=0xFFFFFFFF;for(var i=0;i<u.length;i++)c=CRCT[(c^u[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0}
+function zip(files){var parts=[],cd=[],off=0;
+files.forEach(function(f){var nm=u8(f[0]),d=u8(f[1]),cr=crc32(d);
+var h=new DataView(new ArrayBuffer(30));h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(12,0x21,true);h.setUint32(14,cr,true);h.setUint32(18,d.length,true);h.setUint32(22,d.length,true);h.setUint16(26,nm.length,true);
+parts.push(new Uint8Array(h.buffer),nm,d);
+var c=new DataView(new ArrayBuffer(46));c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0x0800,true);c.setUint16(14,0x21,true);c.setUint32(16,cr,true);c.setUint32(20,d.length,true);c.setUint32(24,d.length,true);c.setUint16(28,nm.length,true);c.setUint32(42,off,true);
+cd.push(new Uint8Array(c.buffer),nm);off+=30+nm.length+d.length});
+var cs=0;cd.forEach(function(x){cs+=x.length});
+var e=new DataView(new ArrayBuffer(22));e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,cs,true);e.setUint32(16,off,true);
+return cat(parts.concat(cd,[new Uint8Array(e.buffer)]))}
+function xe(s){return String(s==null?"":s).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+var XH='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+var RELNS="http://schemas.openxmlformats.org/package/2006/relationships",ODR="http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+/* ---- Excel ---- */
+function colL(i){return String.fromCharCode(65+i)}
+function xlsx(doc){var used={},names=[],sheets=[];
+doc.sections.forEach(function(sec,k){var nm=String(sec.h).replace(/[\[\]:*?\/\\]/g," ").slice(0,28)||"Sheet",b=nm,j=2;while(used[nm.toLowerCase()])nm=b.slice(0,26)+" "+(j++);used[nm.toLowerCase()]=1;names.push(nm);
+var rows=[],r=1;function cell(ci,v,st){var ref=colL(ci)+r;return typeof v=="number"&&isFinite(v)?'<c r="'+ref+'"'+(st?' s="1"':'')+'><v>'+v+'</v></c>':'<c r="'+ref+'" t="inlineStr"'+(st?' s="1"':'')+'><is><t xml:space="preserve">'+xe(v)+'</t></is></c>'}
+function row(a,st){rows.push('<row r="'+r+'">'+a.map(function(v,i){return cell(i,v,st)}).join("")+'</row>');r++}
+row([doc.title],1);row([doc.sub]);r++;row([sec.h],1);if(sec.note)row([sec.note]);r++;row(sec.head,1);sec.rows.forEach(function(x){row(x)});
+var cols=sec.head.map(function(h,i){return '<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+(i==0?28:18)+'" customWidth="1"/>'}).join("");
+sheets.push(XH+'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><cols>'+cols+'</cols><sheetData>'+rows.join("")+'</sheetData></worksheet>')});
+var N=sheets.length,f=[];
+f.push(["[Content_Types].xml",XH+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'+sheets.map(function(s,i){return '<Override PartName="/xl/worksheets/sheet'+(i+1)+'.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'}).join("")+'</Types>']);
+f.push(["_rels/.rels",XH+'<Relationships xmlns="'+RELNS+'"><Relationship Id="rId1" Type="'+ODR+'/officeDocument" Target="xl/workbook.xml"/></Relationships>']);
+f.push(["xl/workbook.xml",XH+'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="'+ODR+'"><sheets>'+names.map(function(s,i){return '<sheet name="'+xe(s)+'" sheetId="'+(i+1)+'" r:id="rId'+(i+1)+'"/>'}).join("")+'</sheets></workbook>']);
+f.push(["xl/_rels/workbook.xml.rels",XH+'<Relationships xmlns="'+RELNS+'">'+sheets.map(function(s,i){return '<Relationship Id="rId'+(i+1)+'" Type="'+ODR+'/worksheet" Target="worksheets/sheet'+(i+1)+'.xml"/>'}).join("")+'<Relationship Id="rId'+(N+1)+'" Type="'+ODR+'/styles" Target="styles.xml"/></Relationships>']);
+f.push(["xl/styles.xml",XH+'<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>']);
+sheets.forEach(function(s,i){f.push(["xl/worksheets/sheet"+(i+1)+".xml",s])});
+return zip(f)}
+/* ---- Word ---- */
+function docx(doc){var TW=10100;
+function P(t,sz,bd,col,af){return '<w:p><w:pPr><w:spacing w:before="0" w:after="'+(af==null?80:af)+'"/></w:pPr><w:r><w:rPr>'+(bd?'<w:b/>':'')+(col?'<w:color w:val="'+col+'"/>':'')+'<w:sz w:val="'+sz+'"/></w:rPr><w:t xml:space="preserve">'+xe(t)+'</w:t></w:r></w:p>'}
+function table(head,rows,w,gr){var tot=w.reduce(function(a,b){return a+b},0),cw=w.map(function(x){return Math.floor(TW*x/tot)});
+var bd=["top","left","bottom","right","insideH","insideV"].map(function(s){return '<w:'+s+' w:val="single" w:sz="4" w:space="0" w:color="BBBBBB"/>'}).join("");
+function tc(v,i,hd){var num=typeof v=="number";return '<w:tc><w:tcPr><w:tcW w:w="'+cw[i]+'" w:type="dxa"/>'+(hd?'<w:shd w:val="clear" w:color="auto" w:fill="E6E6E6"/>':'')+'</w:tcPr><w:p><w:pPr><w:spacing w:before="40" w:after="40"/>'+(num?'<w:jc w:val="right"/>':'')+'</w:pPr><w:r><w:rPr>'+(hd?'<w:b/>':'')+'<w:sz w:val="18"/></w:rPr><w:t xml:space="preserve">'+xe(num?n(v):v)+'</w:t></w:r></w:p></w:tc>'}
+return '<w:tbl><w:tblPr><w:tblW w:w="'+TW+'" w:type="dxa"/><w:tblBorders>'+bd+'</w:tblBorders><w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid>'+cw.map(function(x){return '<w:gridCol w:w="'+x+'"/>'}).join("")+'</w:tblGrid><w:tr><w:trPr><w:tblHeader/></w:trPr>'+head.map(function(h,i){return tc(h,i,1)}).join("")+'</w:tr>'+rows.map(function(r){return '<w:tr>'+r.map(function(v,i){return tc(v,i,0)}).join("")+'</w:tr>'}).join("")+'</w:tbl>'+P("",8,0,"",60)}
+var b=P(doc.title,36,1,"1F4E79",60)+P(doc.sub,20,0,"666666",200);
+doc.sections.forEach(function(sec){b+=P(sec.h,26,1,"1F4E79",80);if(sec.note)b+=P(sec.note,18,0,"666666",80);
+var head=sec.head.slice(),rows=sec.rows.map(function(r){return r.slice()}),w=sec.w.slice();
+if(sec.chart){var mx=Math.max.apply(null,sec.chart.vals.concat([1]));head.push("Graph");w.push(3);rows.forEach(function(r,i){var k=Math.round(12*sec.chart.vals[i]/mx);r.push(new Array(k+1).join("\u2588"))})}
+if(sec.rows.length)b+=table(head,rows,w)});
+return zip([["[Content_Types].xml",XH+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>'],
+["_rels/.rels",XH+'<Relationships xmlns="'+RELNS+'"><Relationship Id="rId1" Type="'+ODR+'/officeDocument" Target="word/document.xml"/></Relationships>'],
+["word/document.xml",XH+'<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>'+b+'<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="900" w:right="900" w:bottom="900" w:left="900" w:header="500" w:footer="500" w:gutter="0"/></w:sectPr></w:body></w:document>']])}
+/* ---- PDF ---- */
+function pdf(doc){var pgs=[],c,y,W=595,H=842,M=40,CW=W-2*M;
+function np(){c=[];pgs.push(c);y=H-M}
+function S(s){return String(s==null?"":s).replace(/[^\x20-\x7e\xa0-\xff]/g,"?").replace(/[\\()]/g,"\\$&")}
+function tw(s,sz){return String(s).length*sz*.55}
+function T(x,yy,sz,bd,s,col){c.push("BT "+(col||"0 g")+" /"+(bd?"F2":"F1")+" "+sz+" Tf "+x.toFixed(1)+" "+yy.toFixed(1)+" Td ("+S(s)+") Tj ET")}
+function table(head,rows,w){var tot=w.reduce(function(a,b){return a+b},0),cw=w.map(function(x){return CW*x/tot}),sz=head.length>6?8:9,rh=sz+9,ra=head.map(function(h,i){return typeof rows[0][i]=="number"});
+function row(r,hd){if(y-rh<M+10){np();if(!hd)row(head,1)}
+if(hd)c.push("0.9 g "+M+" "+(y-rh).toFixed(1)+" "+CW+" "+rh+" re f");
+var x=M;r.forEach(function(v,i){var s=typeof v=="number"?n(v):String(v),mx=Math.floor((cw[i]-8)/(sz*.55));if(s.length>mx)s=s.slice(0,Math.max(mx-1,1))+".";
+T(ra[i]?x+cw[i]-4-tw(s,sz):x+4,y-sz-3,sz,hd,s);x+=cw[i]});
+c.push("0.8 G 0.5 w "+M+" "+(y-rh).toFixed(1)+" m "+(M+CW)+" "+(y-rh).toFixed(1)+" l S");y-=rh}
+row(head,1);rows.forEach(function(r){row(r,0)});y-=10}
+function chart(t,L,V){var hh=76,sl=CW/L.length,bw=Math.min(sl*.65,40),mx=Math.max.apply(null,V.concat([1])),bi=V.indexOf(Math.max.apply(null,V));
+if(y<M+170)np();T(M,y-12,10,1,t);y-=24;var base=y-hh-14;
+V.forEach(function(v,i){var bh=v?Math.max(hh*v/mx,1.5):0,x=M+sl*i+(sl-bw)/2,s=sh(v);
+c.push((i==bi?"0.83 0.63 0.09":"0.12 0.31 0.47")+" rg "+x.toFixed(1)+" "+base.toFixed(1)+" "+bw.toFixed(1)+" "+bh.toFixed(1)+" re f");
+T(x+bw/2-tw(s,7)/2,base+bh+3,7,1,s);T(x+bw/2-tw(L[i],7)/2,base-10,7,0,L[i])});
+c.push("0.7 G 0.5 w "+M+" "+base.toFixed(1)+" m "+(M+CW)+" "+base.toFixed(1)+" l S");y=base-26}
+np();T(M,y-18,18,1,doc.title,"0.12 0.31 0.47 rg");y-=28;T(M,y-10,10,0,doc.sub,"0.4 g");y-=26;
+doc.sections.forEach(function(sec){if(y<M+110)np();T(M,y-12,13,1,sec.h,"0.12 0.31 0.47 rg");y-=24;
+if(sec.note){T(M,y-9,9,0,sec.note,"0.4 g");y-=18}
+if(sec.chart)chart(sec.chart.t,sec.chart.labels,sec.chart.vals);
+if(sec.rows.length)table(sec.head,sec.rows,sec.w)});
+var s="%PDF-1.4\n",off=[];function obj(k,body){off[k]=s.length;s+=k+" 0 obj\n"+body+"\nendobj\n"}
+var N=pgs.length,kids=[];for(var i=0;i<N;i++)kids.push((5+2*i)+" 0 R");
+obj(1,"<< /Type /Catalog /Pages 2 0 R >>");obj(2,"<< /Type /Pages /Kids ["+kids.join(" ")+"] /Count "+N+" >>");
+obj(3,"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>");obj(4,"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>");
+pgs.forEach(function(p,i){var t=p.join("\n");obj(5+2*i,"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 "+W+" "+H+"] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents "+(6+2*i)+" 0 R >>");obj(6+2*i,"<< /Length "+t.length+" >>\nstream\n"+t+"\nendstream")});
+var xr=s.length,T2=5+2*N;s+="xref\n0 "+T2+"\n0000000000 65535 f \n";for(i=1;i<T2;i++)s+=("0000000000"+off[i]).slice(-10)+" 00000 n \n";
+s+="trailer\n<< /Size "+T2+" /Root 1 0 R >>\nstartxref\n"+xr+"\n%%EOF";
+var o=new Uint8Array(s.length);for(i=0;i<s.length;i++)o[i]=s.charCodeAt(i)&255;return o}
+/* ---- what goes into the files ---- */
+function r2(x){return Math.round(x*100)/100}
+function periodSec(cid,p,cu){var nm={m:"This month",l:"Last month",y:"Last year"}[p],rs=repsOf(cid).filter(function(r){return p=="y"?r.d.slice(0,4)=="2025":r.d.slice(0,7)==(p=="m"?THIS:PREV)});
+var sec={h:nm,head:[p=="y"?"Month":"Sunday","Adults","Children","Total","Offering "+cu[1],"Levy 3%"],w:[1.4,1,1,1,1.4,1.2],rows:[]};
+if(!rs.length){sec.note="No Sundays reported in this period.";return sec}
+var L=[],V=[];
+if(p=="y"){sec.note="Adults and children are the average per Sunday. Offering and levy are the total for the month.";
+for(var i=0;i<12;i++){var ms=rs.filter(function(r){return +r.d.slice(5,7)==i+1}),a=ms.length?Math.round(sum(ms,function(x){return x.a})/ms.length):0,k=ms.length?Math.round(sum(ms,function(x){return x.k})/ms.length):0,o=sum(ms,function(x){return x.o});
+L.push(MN[i]);V.push(a+k);sec.rows.push([MN[i],a,k,a+k,o,r2(o*.03)])}}
+else rs.forEach(function(r){var lb=mname(r.d)+" "+(+r.d.slice(8));L.push(lb);V.push(r.a+r.k);sec.rows.push([lb,r.a,r.k,r.a+r.k,r.o,r2(r.o*.03)])});
+sec.chart={t:"People at church (adults and children together)",labels:L,vals:V};return sec}
+function churchDoc(cid){var c=churches.filter(function(x){return x.id==cid})[0],cu=cur(c.country);
+var det=[["Church",c.name],["Country",c.country],["City",c.city],["Leader",c.leader],["Contact",c.contact||""]];if(c.extra)det.push(["Details",c.extra]);det.push(["Currency",cu[1]+" ("+cu[2]+")"],["Highest attendance ever",String(maxAtt(cid))]);
+return{title:c.name+" - church stats",sub:"C3 SNA - made on "+new Date().toISOString().slice(0,10),sections:[{h:"Church details",head:["Item","Detail"],w:[1,2.5],rows:det},periodSec(cid,"m",cu),periodSec(cid,"l",cu),periodSec(cid,"y",cu)]}}
+function adminDoc(){var u=usedCt(),S=u.map(function(c){return stats(c[0])}),cr=[],ch=[];
+u.forEach(function(c,i){var s=S[i];cr.push([c[0],c[1],s.cs.length,s.sub,s.A,s.K,s.A+s.K,r2(s.levy)])});
+churches.slice().sort(function(a,b){return a.country<b.country?-1:a.country==b.country&&a.name<b.name?-1:1}).forEach(function(x){var cu=cur(x.country);ch.push([x.name,x.country,x.city,x.leader,Math.round(churchAvg(x.id,THIS)),maxAtt(x.id),cu[1]+" "+n(r2(sum(inM(x.id,THIS),function(r){return r.o})*.03))])});
+return{title:"C3 Southern Africa - all countries",sub:"C3 SNA - "+mname(THIS)+" "+THIS.slice(0,4)+" - made on "+new Date().toISOString().slice(0,10),sections:[
+{h:"All countries",note:"Adults and children are from the latest Sunday of the month. Levy is 3% of offering this month.",head:["Country","Currency","Churches","Reported","Adults","Children","Total","Levy owed"],w:[1.6,1,1,1,1,1,1,1.3],rows:cr,chart:{t:"People at church, by country",labels:u.map(function(c){return c[3]}),vals:S.map(function(s){return s.A+s.K})}},
+{h:"Churches",head:["Church","Country","City","Leader","Avg people","Highest","Levy this month"],w:[2.2,1.4,1.2,1.6,1,1,1.7],rows:ch}]}}
+/* ---- save and share the file ---- */
+function b64(a){var s="";for(var i=0;i<a.length;i+=8192)s+=String.fromCharCode.apply(null,a.subarray(i,i+8192));return btoa(s)}
+function saveFile(name,a,mime){var C=window.Capacitor,P=C&&C.Plugins;
+if(P&&P.Filesystem&&P.Share){P.Filesystem.writeFile({path:name,data:b64(a),directory:"CACHE"}).then(function(r){return P.Share.share({title:name,dialogTitle:"Save or send "+name,url:r.uri})}).catch(function(e){var m=String(e&&e.message||e);if(!/cancel/i.test(m))toast("Could not save the file: "+m)})}
+else{var l=document.createElement("a");l.href=URL.createObjectURL(new Blob([a],{type:mime}));l.download=name;document.body.appendChild(l);l.click();setTimeout(function(){URL.revokeObjectURL(l.href);l.remove()},3000)}}
+function dl(t,cid){try{var d=cid?churchDoc(cid):adminDoc(),nm="C3-SNA-"+(cid?churches.filter(function(x){return x.id==cid})[0].name:"all-countries").replace(/[^A-Za-z0-9]+/g,"-").replace(/-$/,""),
+k={PDF:[pdf,"pdf","application/pdf"],Excel:[xlsx,"xlsx","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],Word:[docx,"docx","application/vnd.openxmlformats-officedocument.wordprocessingml.document"]}[t];
+saveFile(nm+"."+k[1],k[0](d),k[2]);toast("Making your "+t+" file...")}catch(e){toast("Could not make the "+t+" file: "+(e&&e.message||e))}}
 function tg(cid){var e=$("d"+cid);e.classList.toggle("hide");if(!e.classList.contains("hide"))paint(cid,"pnA"+cid);$("ar"+cid).textContent=e.classList.contains("hide")?"▾":"▴"}
 function countryView(cn){var c=cur(cn),s=stats(cn),ms=[0,1,2,3,4,5].map(function(i){return mk(5-i)}),L=ms.map(mname);
 var att=ms.map(function(m){return Math.round(sum(s.cs,function(x){return churchAvg(x.id,m)}))}),lev=ms.map(function(m){return Math.round(sum(s.cs,function(x){return sum(inM(x.id,m),function(r){return r.o})})*.03)});
