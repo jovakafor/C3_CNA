@@ -60,10 +60,10 @@ while(t<=e){var a=Math.round(ba+i*gr+7*Math.sin(i*1.7)),k=Math.round(bk+i*gr/3+4
 out.push({c:cid,d:new Date(t).toISOString().slice(0,10),a:a,k:k,o:Math.round((a+k)*rate*(0.85+0.3*Math.abs(Math.sin(i*2.3)))/10)*10});i++;t+=6048e5}return out}
 var reports=[].concat(gen(1,200,80,80,.3,"2026-11-08"),gen(2,110,45,60,.2,"2026-11-08"),gen(3,140,60,6000,.25,"2026-11-08"),gen(4,80,30,5000,.1,"2026-10-25"),gen(5,160,60,8,.1,"2026-11-08"),gen(6,280,90,200,.4,"2026-11-08"));
 var me=null,isMain=false,sel=null,pers={};
-var KEY="c3sna_v1";
-function save(){try{localStorage.setItem(KEY,JSON.stringify({churches:churches,reports:reports,me:me}))}catch(e){}}
-(function(){try{var d=JSON.parse(localStorage.getItem(KEY)||"null");if(d&&d.churches&&d.reports){churches=d.churches;reports=d.reports;me=d.me||null}}catch(e){}})();
-function resetAll(){if(confirm("Erase all data on this phone and start again?")){try{localStorage.removeItem(KEY)}catch(e){}location.reload()}}
+churches=[];reports=[];
+var KEY="c3sna_v2";
+function save(){try{localStorage.setItem(KEY,JSON.stringify({me:me}))}catch(e){}}
+(function(){try{var d=JSON.parse(localStorage.getItem(KEY)||"null");if(d&&d.me){me=d.me;churches=[me]}}catch(e){}})();
 var $=function(i){return document.getElementById(i)};
 function n(x){return Number(x).toLocaleString("en-US")}
 function cur(c){for(var i=0;i<CT.length;i++)if(CT[i][0]==c)return CT[i];return null}
@@ -77,7 +77,6 @@ function maxAtt(cid,skip){return repsOf(cid).reduce(function(m,r){return r.d==sk
 function churchAvg(cid,m){var r=inM(cid,m);return r.length?sum(r,function(x){return x.a+x.k})/r.length:0}
 function mk(i){return new Date(Date.UTC(2026,10-i,1)).toISOString().slice(0,7)}
 function mname(m){return MN[+m.slice(5,7)-1]}
-function go(v){sel=null;render(v)}
 function back(){return '<button class="back" onclick="go(\'home\')">‹ Back</button>'}
 var IC={h:'<svg viewBox="0 0 24 24"><path d="M12 3v4M10 5h4"/><path d="M5 21V12l7-5 7 5v9z"/><path d="M10 21v-5h4v5"/></svg>',r:'<svg viewBox="0 0 24 24"><path d="M9 4h6v3H9z"/><path d="M7 5.5H5V20h14V5.5h-2"/><path d="M9 12h6M9 16h4"/></svg>',s:'<svg viewBox="0 0 24 24"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>',g:'<svg viewBox="0 0 24 24"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.5"/><circle cx="8" cy="17" r="2.5"/></svg>',c:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>',m:'<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>'};
 var ADM=[["c","Countries","go('admin')"],["h","Churches","go('achurches')"],["m","More","go('amore')"]];
@@ -96,7 +95,6 @@ function best(L,V,what){var i=V.indexOf(Math.max.apply(null,V));return '<div cla
 /* stats panel (church admin and administrator see the same) */
 function paint(cid,host){$(host).innerHTML=panelHTML(cid,host)}
 function setP(cid,p,host){pers[cid]=p;paint(cid,host)}
-function seed(){reports=reports.concat(gen(me.id,110,45,80,.2,"2026-11-08"));save();paint(me.id,"pnC")}
 function panelHTML(cid,host){var c=churches.filter(function(x){return x.id==cid})[0],cu=cur(c.country),p=pers[cid]||"m",all=repsOf(cid);
 var tabs='<div class="tabs">'+[["m","This month"],["l","Last month"],["y","Last year"]].map(function(t){return '<button class="'+(p==t[0]?'on':'')+'" onclick="setP('+cid+',\''+t[0]+'\',\''+host+'\')">'+t[1]+'</button>'}).join("")+'</div>';
 if(!all.length)return tabs+'<div class="card"><p class="mu">No reports yet. Send your first Sunday report to see graphs.</p>'+(host=="pnC"?'<button class="btn o" onclick="seed()">Add sample history (demo only)</button>':'')+'</div>';
@@ -111,24 +109,78 @@ return tabs+'<div class="stats"><div class="stat"><b>'+n(maxAtt(cid))+'</b><span
 +'<div class="card"><h3>Offering ('+cu[1]+')</h3><div class="mu">'+(p=="y"?'Total for each month.':'Offering on each Sunday.')+'</div>'+bars(L,O,C1)+best(L,O,p=="y"?"best month":"best Sunday")+'</div>'
 +(host=="pnC"?'<h3 style="margin:16px 0 6px">Save my church stats</h3>'+exp(cid):'')}
 /* screens */
+/* ===== ONLINE (Supabase) ===== */
+var SB={u:"https://cfvqdcrxpqtvvxgtjhqt.supabase.co",k:"sb_publishable_M57uPBbr_Ygg7JwZFAe_AQ_-qhpXiUp"};
+var ADN=null,curV="",AS={admin:1,achurches:1,amore:1};
+function sg(k){try{return JSON.parse(localStorage.getItem("c3s_"+k)||"null")}catch(e){return null}}
+function ss(k,v){try{if(v)localStorage.setItem("c3s_"+k,JSON.stringify(v));else localStorage.removeItem("c3s_"+k)}catch(e){}}
+function fix(s){if(s&&s.access_token)s.exp=s.expires_at||(Date.now()/1000+(s.expires_in||3600));return s}
+function raw(path,o){o=o||{};var h={apikey:SB.k,"Content-Type":"application/json"},k,ac=new AbortController(),tm=setTimeout(function(){ac.abort()},20000);
+for(k in (o.h||{}))h[k]=o.h[k];
+return fetch(SB.u+path,{method:o.m||"GET",headers:h,body:o.b===undefined?undefined:JSON.stringify(o.b),signal:ac.signal}).then(function(r){clearTimeout(tm);return r.text().then(function(t){var j=null;try{j=t?JSON.parse(t):null}catch(e){}
+if(!r.ok){var e=new Error((j&&(j.msg||j.message||j.error_description||j.error))||("Error "+r.status));e.status=r.status;throw e}return j})}).catch(function(e){clearTimeout(tm);if(e.name=="AbortError"||e instanceof TypeError)throw new Error("No internet. Check your connection and try again.");throw e})}
+function token(k){var s=sg(k);if(!s)return Promise.resolve(null);if(s.exp-60>Date.now()/1000)return Promise.resolve(s);
+return raw("/auth/v1/token?grant_type=refresh_token",{m:"POST",b:{refresh_token:s.refresh_token}}).then(function(r){r=fix(r);ss(k,r);return r}).catch(function(e){if(e.status>=400&&e.status<500){ss(k,null);return null}throw e})}
+function api(k,path,o){return token(k).then(function(s){if(!s)throw new Error("Please sign in again.");o=o||{};o.h=o.h||{};o.h.Authorization="Bearer "+s.access_token;return raw(path,o)})}
+function anon(k){return token(k).then(function(s){return s||raw("/auth/v1/signup",{m:"POST",b:{}}).then(function(r){r=fix(r);if(!r||!r.access_token)throw new Error("Anonymous sign-in is off in Supabase.");ss(k,r);return r})})}
+function emailAuth(e,p){return raw("/auth/v1/token?grant_type=password",{m:"POST",b:{email:e,password:p}}).catch(function(x){if(x.status!=400&&x.status!=401)throw x;
+return raw("/auth/v1/signup",{m:"POST",b:{email:e,password:p}}).then(function(r){if(!r||!r.access_token)throw new Error("Check your email to confirm it, then sign in again.");return r}).catch(function(y){if(/already/i.test(y.message))throw new Error("Wrong password for this email.");throw y})})}
+function page(k,path){var out=[];function more(off){return api(k,path+"&limit=1000&offset="+off).then(function(r){out=out.concat(r);return r.length==1000?more(off+1000):out})}return more(0)}
+function norm(c){["name","country","city","leader","contact","extra"].forEach(function(f){if(c[f]==null)c[f]=""});return c}
+function rep(r){return{c:r.church_id,d:r.d,a:r.a,k:r.k,o:+r.o}}
+function loadAll(k){var before=JSON.stringify([churches,reports]);return Promise.all([page(k,"/rest/v1/churches?select=*&order=id"),page(k,"/rest/v1/reports?select=church_id,d,a,k,o&order=id")]).then(function(x){churches=x[0].map(norm);reports=x[1].map(rep);ADN=k;
+return isMain?api(k,"/rest/v1/rpc/get_view_key",{m:"POST",b:{}}).then(function(v){if(v)VIEW=v}).catch(function(){}):0}).then(function(){return JSON.stringify([churches,reports])!=before})}
+function loadMine(){return Promise.all([page("church","/rest/v1/churches?select=*&order=id"),page("church","/rest/v1/reports?select=church_id,d,a,k,o&order=id")]).then(function(x){me=x[0][0]?norm(x[0][0]):null;churches=me?[me]:[];reports=x[1].map(rep);save()})}
+function go(v){sel=null;if(v=="home"||v=="alogin")ADN=null;if(v=="church"){openChurch();return}render(v);
+if(AS[v]&&ADN)loadAll(ADN).then(function(ch){if(ch&&curV==v)render(v)}).catch(function(){})}
+function openChurch(){toast("Loading your church...");anon("church").then(loadMine).then(function(){render("church")}).catch(function(e){toast(e.message);render("church")})}
+function emptyAdmin(v){return '<h1>Administrator</h1><p class="mu">'+(isMain?'Main admin':'View only')+'</p><div class="card"><p class="mu">No churches yet. When a church admin saves a church, it will show here.</p><button class="btn o" onclick="go(\''+v+'\')" style="width:100%">Refresh</button></div>'+nav(ADM,v=="admin"?"c":"h")}
+function alogin(){var s=sg("admin"),w=sg("view");return back()+'<h1>Administrator</h1>'
++(s&&s.user&&s.user.email?'<div class="card"><p class="mu">Signed in as '+esc(s.user.email)+'</p><button class="btn" onclick="afterAdmin()" style="width:100%">Open admin</button></div>':'')
++'<p class="mu">Main admin: sign in with your email. The first person to sign in and enter the admin key becomes the main admin.</p><label for="em">Email</label><input id="em" type="email" autocomplete="email" value="'+esc(s&&s.user&&s.user.email||"")+'"><label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password" placeholder="At least 6 characters"><p><button class="btn" onclick="adminSignIn()" style="width:100%">Continue</button></p>'
++'<div class="card" style="margin-top:18px"><h3>View access</h3><p class="mu">Have a view key from the main admin? Type it here.</p><input id="key" autocomplete="off" placeholder="View key"><p><button class="btn o" onclick="viewLogin()" style="width:100%">Open view access</button></p>'+(w?'<button class="btn o" onclick="openView()" style="width:100%">Continue as viewer</button>':'')+'</div>'}
+function akey(){var s=sg("admin");return back()+'<h1>Confirm main admin</h1><p class="mu">Signed in as '+esc(s&&s.user&&s.user.email||"")+'. Enter the admin key to become the main admin.</p><label for="key">Admin key</label><input id="key" autocomplete="off" placeholder="Admin key"><p><button class="btn" onclick="claimKey()" style="width:100%">Confirm</button></p>'}
+function enterAdmin(k){return loadAll(k).then(function(){sel=null;render("admin")})}
+function adminSignIn(){var e=$("em").value.trim().toLowerCase(),p=$("pw").value;if(!/^\S+@\S+\.\S+$/.test(e)||p.length<6){toast("Enter a real email and a password of at least 6 characters.");return}
+toast("Signing in...");emailAuth(e,p).then(function(r){ss("admin",fix(r));return afterAdmin()}).catch(function(x){toast(x.message)})}
+function afterAdmin(){toast("Checking...");return api("admin","/rest/v1/admins?select=user_id").then(function(r){if(r.length){isMain=true;return enterAdmin("admin")}render("akey")}).catch(function(x){toast(x.message)})}
+function claimKey(){var k=$("key").value.trim();if(!k){toast("Type the admin key.");return}
+api("admin","/rest/v1/rpc/claim_admin",{m:"POST",b:{p_key:k}}).then(function(r){if(r=="ok"){isMain=true;return enterAdmin("admin")}toast(r=="wrong"?"Wrong key. Check it and try again.":r=="taken"?"Another person is already the main admin.":"Please sign in again.")}).catch(function(x){toast(x.message)})}
+function viewLogin(){var k=$("key").value.trim();if(!k){toast("Type the view key.");return}toast("Checking...");
+anon("view").then(function(){return api("view","/rest/v1/rpc/redeem_view_key",{m:"POST",b:{p_key:k}})}).then(function(ok){if(!ok){toast("Wrong key. Check it and try again.");return}isMain=false;return enterAdmin("view")}).catch(function(x){toast(x.message)})}
+function openView(){api("view","/rest/v1/viewers?select=user_id").then(function(r){if(r.length){isMain=false;return enterAdmin("view")}toast("Type the view key.")}).catch(function(x){toast(x.message)})}
+function signOut(){ss("admin",null);ss("view",null);isMain=false;ADN=null;go("home")}
+function resetAll(){if(!isMain){toast("Only the main admin can do this.");return}
+if(!confirm("Erase ALL churches and reports online for everyone? This cannot be undone."))return;
+api("admin","/rest/v1/churches?id=gt.0",{m:"DELETE"}).then(function(){return loadAll("admin")}).then(function(){toast("All churches and reports erased.");render("amore")}).catch(function(x){toast(x.message)})}
+function saveChurch(){var m={name:$("cn").value.trim(),country:$("cc").value.trim(),city:$("ci").value.trim(),leader:$("ln").value.trim(),contact:$("lc").value.trim(),extra:$("ex").value.trim()};
+if(!m.name||!cur(m.country)){toast("Enter the church name and pick a country from the list.");return}
+var first=!me;toast("Saving...");
+anon("church").then(function(){return first?api("church","/rest/v1/churches",{m:"POST",h:{Prefer:"return=representation"},b:m}):api("church","/rest/v1/churches?id=eq."+me.id,{m:"PATCH",h:{Prefer:"return=representation"},b:m})}).then(function(r){if(!r||!r[0])throw new Error("Could not save. Try again.");me=norm(r[0]);churches=[me];save();toast(first?"Church saved. The administrator can now see it.":"Changes saved.");render("church");if(!first)ctab("g")}).catch(function(e){toast("Could not save: "+e.message)})}
+function sendReport(){var a=+$("ad").value,k=+$("kd").value,o=+$("of").value,d=$("dt").value;
+if(!d||(!a&&!k)){toast("Enter the date and the number of adults and children.");return}
+if(new Date(d+"T00:00:00Z").getUTCDay()!=0){toast("Pick a Sunday date.");return}
+if(sent(d)){toast("You already sent the report for this Sunday.");return}
+$("sb").disabled=true;toast("Sending...");
+api("church","/rest/v1/reports",{m:"POST",b:{church_id:me.id,d:d,a:a,k:k,o:o}}).then(function(){reports.push({c:me.id,d:d,a:a,k:k,o:o});toast("Report sent. The administrator can now see it.");ctab("r")}).catch(function(e){toast(e.status==409?"You already sent the report for this Sunday.":"Could not send: "+e.message);if($("sb"))calc()})}
+function seed(){toast("Adding sample history...");var rows=gen(me.id,110,45,80,.2,"2026-11-08").map(function(r){return{church_id:me.id,d:r.d,a:r.a,k:r.k,o:r.o}});
+api("church","/rest/v1/reports?on_conflict=church_id,d",{m:"POST",h:{Prefer:"resolution=ignore-duplicates,return=minimal"},b:rows}).then(loadMine).then(function(){paint(me.id,"pnC");toast("Sample history added.")}).catch(function(e){toast("Could not add: "+e.message)})}
+
 function render(v){var h="";
-if(v=="home")h='<h1>C3 Southern Africa</h1><p class="mu">Choose how you want to use the app.</p><button class="big b1" onclick="go(\'alogin\')"><b>Administrator</b><span>See levy and attendance for every country</span></button><button class="big b2" onclick="go(\'church\')"><b>Church Admin</b><span>Enter your church details and Sunday numbers</span></button><p class="mu">Trial version: data is saved on this phone only. No internet needed.</p>';
-if(v=="alogin")h=back()+'<h1>Administrator</h1><p class="mu">Enter your admin key.</p><label for="key">Admin key</label><input id="key" autocomplete="off" placeholder="Example: C3-ADMIN-2026"><p class="mu">Demo keys: C3-ADMIN-2026 (main admin) or C3-VIEW-7391 (shared view key).</p><button class="btn" onclick="login()">Open admin</button>';
+if(v=="home")h='<h1>C3 Southern Africa</h1><p class="mu">Choose how you want to use the app.</p><button class="big b1" onclick="go(\'alogin\')"><b>Administrator</b><span>See levy and attendance for every country</span></button><button class="big b2" onclick="go(\'church\')"><b>Church Admin</b><span>Enter your church details and Sunday numbers</span></button><p class="mu">Needs internet. Your data is saved online so the administrator can see it.</p>';
+if(v=="alogin")h=alogin();
+if(v=="akey")h=akey();
 if(v=="church")h=me?back()+'<h1>'+esc(me.name)+'</h1><p class="mu">'+esc(me.city)+', '+esc(me.country)+'</p><div id="ct"></div><div id="nv"></div>':back()+'<h1>Set up your church</h1><p class="mu">You only do this once. You can change it later in Settings.</p><div class="card">'+form(false)+'</div>';
-if(v=="admin")h=adminHome();
+if(v=="admin")h=churches.length?adminHome():emptyAdmin(v);
 if(v=="country")h=countryView(sel);
 if(v=="amore")h=amoreHTML();
-if(v=="achurches")h=achurchesHTML();
+if(v=="achurches")h=churches.length?achurchesHTML():emptyAdmin(v);
 if(v=="cchurches")h=cchurchesHTML(sel);
-$("app").innerHTML=h;window.scrollTo(0,0);
+curV=v;$("app").innerHTML=h;window.scrollTo(0,0);
 if(v=="church"){if(me)ctab("r");else pick($("cc"),$("cl"),function(){})}}
 function form(edit){var m=edit?me:{};return '<label for="cn">Church name</label><input id="cn" value="'+esc(m.name||"")+'"><label for="cc">Country</label><input id="cc" placeholder="Search country" autocomplete="off" value="'+esc(m.country||"")+'"><div id="cl" class="list hide"></div><label for="ci">City</label><input id="ci" value="'+esc(m.city||"")+'"><label for="ln">Leader name</label><input id="ln" value="'+esc(m.leader||"")+'"><label for="lc">Leader contact</label><input id="lc" inputmode="tel" value="'+esc(m.contact||"")+'"><label for="ex">Extra details (optional)</label><textarea id="ex" rows="2">'+esc(m.extra||"")+'</textarea><p><button class="btn" onclick="saveChurch()" style="width:100%">'+(edit?'Save changes':'Save church')+'</button></p>'}
 function pick(inp,list,cb){function show(){var q=inp.value.toLowerCase(),r=CT.filter(function(c){return c[0].toLowerCase().indexOf(q)>-1});list.innerHTML=r.map(function(c){return '<div data-i="'+CT.indexOf(c)+'">'+c[0]+' <span class="mu">('+c[1]+')</span></div>'}).join("")||'<div class="mu">No match</div>';list.classList.remove("hide")}
 inp.onfocus=show;inp.oninput=show;list.onclick=function(e){var d=e.target.closest("[data-i]");if(!d)return;inp.value=CT[d.dataset.i][0];list.classList.add("hide");cb()}}
-function saveChurch(){var m={name:$("cn").value.trim(),country:$("cc").value.trim(),city:$("ci").value.trim(),leader:$("ln").value.trim(),contact:$("lc").value.trim(),extra:$("ex").value.trim()};
-if(!m.name||!cur(m.country)){toast("Enter the church name and pick a country from the list.");return}
-var first=!me;if(me){m.id=me.id;churches=churches.map(function(c){return c.id==m.id?m:c})}else{m.id=Date.now();churches.push(m)}
-me=m;save();toast(first?"Church saved. You will not need to enter this again.":"Changes saved.");render("church");if(!first)ctab("g")}
 function ctab(t){$("nv").innerHTML=nav([["r","Report","ctab('r')"],["s","Stats","ctab('s')"],["g","Settings","ctab('g')"]],t);var c=$("ct");
 if(t=="r"){c.innerHTML=report();calc()}
 if(t=="s"){c.innerHTML='<div id="pnC"></div>';paint(me.id,"pnC")}
@@ -141,13 +193,6 @@ $("cmp").innerHTML=st("Last Sunday",prev?n(prev.a+prev.k):"–")+st("Today",t?n(
 $("rec").textContent=t&&hi&&t>hi?"New record! Today is your highest attendance.":"";
 $("lv").textContent=cu[1]+" "+n((o*0.03).toFixed(2));var dup=d&&sent(d),sun=d&&new Date(d+"T00:00:00Z").getUTCDay()==0;$("dup").textContent=dup?"The report for this Sunday is already sent.":(d&&!sun?"This date is not a Sunday.":"");$("sb").disabled=!!(dup||(d&&!sun));$("sb").style.opacity=$("sb").disabled?.5:1}
 function sent(d){return repsOf(me.id).some(function(r){return r.d==d})}
-function sendReport(){var a=+$("ad").value,k=+$("kd").value,o=+$("of").value,d=$("dt").value;
-if(!d||(!a&&!k)){toast("Enter the date and the number of adults and children.");return}
-if(new Date(d+"T00:00:00Z").getUTCDay()!=0){toast("Pick a Sunday date.");return}
-if(sent(d)){toast("You already sent the report for this Sunday.");return}
-reports.push({c:me.id,d:d,a:a,k:k,o:o});save();
-toast("Report sent. The administrator can now see it.");ctab("r")}
-function login(){var k=$("key").value.trim().toUpperCase();if(k==MAIN||k==VIEW){isMain=(k==MAIN);go("admin")}else toast("Wrong key. Check it and try again.")}
 function stats(cn){var cs=churches.filter(function(c){return c.country==cn}),A=0,K=0,O=0,mx=0,sub=0,now=0,pv=0;
 cs.forEach(function(c){var rs=inM(c.id,THIS);if(rs.length){sub++;A+=rs[rs.length-1].a;K+=rs[rs.length-1].k}O+=sum(rs,function(x){return x.o});mx+=maxAtt(c.id);now+=churchAvg(c.id,THIS);pv+=churchAvg(c.id,PREV)});
 return{cs:cs,A:A,K:K,levy:O*.03,mx:mx,sub:sub,g:pv?Math.round((now-pv)/pv*100):null}}
@@ -228,7 +273,7 @@ c.push("0.7 G 0.5 w "+M+" "+base.toFixed(1)+" m "+(M+CW)+" "+base.toFixed(1)+" l
 np();T(M,y-18,18,1,doc.title,"0.12 0.31 0.47 rg");y-=28;T(M,y-10,10,0,doc.sub,"0.4 g");y-=26;
 doc.sections.forEach(function(sec){if(y<M+110)np();T(M,y-12,13,1,sec.h,"0.12 0.31 0.47 rg");y-=24;
 if(sec.note){T(M,y-9,9,0,sec.note,"0.4 g");y-=18}
-if(sec.chart)chart(sec.chart.t,sec.chart.labels,sec.chart.vals);
+if(sec.chart&&sec.chart.vals.length)chart(sec.chart.t,sec.chart.labels,sec.chart.vals);
 if(sec.rows.length)table(sec.head,sec.rows,sec.w)});
 var s="%PDF-1.4\n",off=[];function obj(k,body){off[k]=s.length;s+=k+" 0 obj\n"+body+"\nendobj\n"}
 var N=pgs.length,kids=[];for(var i=0;i<N;i++)kids.push((5+2*i)+" 0 R");
@@ -291,6 +336,6 @@ return '<button class="back" onclick="go(\'achurches\')">‹ All countries</butt
 +'<input id="chs" placeholder="Search churches" autocomplete="off" oninput="filtC()"><div id="chl">'+s.cs.map(function(x){var av=Math.round(churchAvg(x.id,THIS)),lv=sum(inM(x.id,THIS),function(r){return r.o})*.03;
 return '<div class="card" style="border-left:7px solid '+k+'" data-n="'+esc((x.name+" "+x.city+" "+x.leader).toLowerCase())+'"><div class="item ch" onclick="tg('+x.id+')"><div><h3 style="margin:0">'+esc(x.name)+'</h3><div class="mu">'+esc(x.city)+'</div><div class="mu">'+(av?n(av)+' people per Sunday · Levy '+c[1]+' '+n(lv.toFixed(2)):'Not reported this month')+'</div></div><span id="ar'+x.id+'">▾</span></div><div id="d'+x.id+'" class="hide"><p class="mu">Leader: '+esc(x.leader)+'<br>Contact: '+esc(x.contact)+(x.extra?'<br>Notes: '+esc(x.extra):'')+'</p><div id="pnA'+x.id+'"></div></div></div>'}).join("")+'</div>'+nav(ADM,"h")}
 function filtC(){var q=$("chs").value.toLowerCase();document.querySelectorAll("#chl > .card").forEach(function(e){e.classList.toggle("hide",e.dataset.n.indexOf(q)<0)})}
-function amoreHTML(){return '<h1>More</h1><p class="mu">'+(isMain?'Main admin':'View only')+'</p><div class="card"><h3>Save the report</h3><p class="mu">Save the levy and attendance for all countries.</p>'+exp()+'</div>'+(isMain?'<div class="card"><h3>Share view access</h3><p class="mu">Give this key to a person who should see admin stats:</p><b style="font-size:20px">'+VIEW+'</b></div>':'<div class="card"><h3>Share view access</h3><p class="mu">Only the main admin can share the key.</p></div>')+'<p><button class="btn o" onclick="resetAll()" style="width:100%">Reset demo data</button></p><p><button class="btn o" onclick="go(\'home\')" style="width:100%">Exit admin</button></p>'+nav(ADM,"m")}
+function amoreHTML(){return '<h1>More</h1><p class="mu">'+(isMain?'Main admin':'View only')+'</p><div class="card"><h3>Save the report</h3><p class="mu">Save the levy and attendance for all countries.</p>'+exp()+'</div>'+(isMain?'<div class="card"><h3>Share view access</h3><p class="mu">Give this key to a person who should see admin stats:</p><b style="font-size:20px">'+VIEW+'</b></div>':'<div class="card"><h3>Share view access</h3><p class="mu">Only the main admin can share the key.</p></div>')+''+(isMain?'<p><button class="btn o" onclick="resetAll()" style="width:100%">Erase all online data</button></p>':'')+'<p><button class="btn o" onclick="signOut()" style="width:100%">Sign out</button></p><p><button class="btn o" onclick="go(\'home\')" style="width:100%">Exit admin</button></p>'+nav(ADM,"m")}
 render("home");
 </script></body></html>
