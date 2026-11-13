@@ -59,6 +59,7 @@ input,textarea{width:100%;font:inherit;padding:11px;border:1px solid var(--bd);b
 .chips button{border:1px solid var(--bd);background:var(--sf);color:var(--tx);border-radius:20px;padding:7px 12px;font-size:14px}
 .chips button.on{background:var(--pr);color:var(--pt);border-color:var(--pr)}
 .hide{display:none}
+.pwb{position:relative}.pwb input{padding-right:46px}.eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--mu);width:42px;height:42px;display:flex;align-items:center;justify-content:center}.eye svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 </style></head><body>
 <div id="app"></div><div id="toast"></div>
 <script>
@@ -167,13 +168,17 @@ function go(v){sel=null;if(v=="home"||v=="alogin")ADN=null;if(v=="church"){openC
 if(AS[v]&&ADN)loadAll(ADN).then(function(ch){if(ch&&curV==v)render(v)}).catch(function(){})}
 function openChurch(){toast("Loading your church...");anon("church").then(loadMine).then(function(){render("church")}).catch(function(e){toast(e.message);render("church")})}
 function emptyAdmin(v){return '<h1>Administrator</h1><p class="mu">'+(isMain?'Main admin':'View only')+'</p><div class="card"><p class="mu">No churches yet. When a church admin saves a church, it will show here.</p><button class="btn o" onclick="go(\''+v+'\')" style="width:100%">Refresh</button></div>'+nav(ADM,v=="admin"?"c":"h")}
+var EYE='<svg viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>',EYEX='<svg viewBox="0 0 24 24"><path d="M17.9 17.9A10.9 10.9 0 0 1 12 19C5 19 1 12 1 12a18 18 0 0 1 5.1-5.9M9.9 5.2A9.7 9.7 0 0 1 12 5c7 0 11 7 11 7a18 18 0 0 1-2.2 3.2M1 1l22 22"/><path d="M14.1 14.1a3 3 0 1 1-4.2-4.2"/></svg>';
+function pwf(id,ph,ac){return '<div class="pwb"><input id="'+id+'" type="password" autocomplete="'+ac+'" placeholder="'+ph+'"><button type="button" class="eye" aria-label="Show or hide password" onclick="eyeT(\''+id+'\',this)">'+EYE+'</button></div>'}
+function eyeT(id,b){var i=$(id),h=i.type=="password";i.type=h?"text":"password";b.innerHTML=h?EYEX:EYE}
 function alogin(){var s=sg("admin"),w=sg("view");return back()+'<h1>Administrator</h1>'
 +(s&&s.user&&s.user.email?'<div class="card"><p class="mu">Signed in as '+esc(s.user.email)+'</p><button class="btn" onclick="afterAdmin()" style="width:100%">Open admin</button></div>':'')
-+'<p class="mu">Main admin: sign in with your email. The first person to sign in and enter the admin key becomes the main admin.</p><label for="em">Email</label><input id="em" type="email" autocomplete="email" value="'+esc(s&&s.user&&s.user.email||"")+'"><label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password" placeholder="At least 6 characters"><p><button class="btn" onclick="adminSignIn()" style="width:100%">Continue</button></p>'
++'<p class="mu">Main admin: sign in with your email. The first person to sign in and enter the admin key becomes the main admin.</p><label for="em">Email</label><input id="em" type="email" autocomplete="email" value="'+esc(s&&s.user&&s.user.email||"")+'"><label for="pw">Password</label>'+pwf("pw","At least 6 characters","current-password")+'<label for="pw2">Confirm password</label>'+pwf("pw2","Type the password again","current-password")+'<p><button class="btn" onclick="adminSignIn()" style="width:100%">Continue</button></p>'
 +'<div class="card" style="margin-top:18px"><h3>View access</h3><p class="mu">Have a view key from the main admin? Type it here.</p><input id="key" autocomplete="off" placeholder="View key"><p><button class="btn o" onclick="viewLogin()" style="width:100%">Open view access</button></p>'+(w?'<button class="btn o" onclick="openView()" style="width:100%">Continue as viewer</button>':'')+'</div>'}
 function akey(){var s=sg("admin");return back()+'<h1>Confirm main admin</h1><p class="mu">Signed in as '+esc(s&&s.user&&s.user.email||"")+'. Enter the admin key to become the main admin.</p><label for="key">Admin key</label><input id="key" autocomplete="off" placeholder="Admin key"><p><button class="btn" onclick="claimKey()" style="width:100%">Confirm</button></p>'}
 function enterAdmin(k){return loadAll(k).then(function(){sel=null;render("admin")})}
 function adminSignIn(){var e=$("em").value.trim().toLowerCase(),p=$("pw").value;if(!/^\S+@\S+\.\S+$/.test(e)||p.length<6){toast("Enter a real email and a password of at least 6 characters.");return}
+if(p!==$("pw2").value){toast("The two passwords do not match. Type them again.");return}
 toast("Signing in...");emailAuth(e,p).then(function(r){ss("admin",fix(r));return afterAdmin()}).catch(function(x){toast(x.message)})}
 function afterAdmin(){toast("Checking...");return api("admin","/rest/v1/admins?select=user_id").then(function(r){if(r.length){isMain=true;return enterAdmin("admin")}render("akey")}).catch(function(x){toast(x.message)})}
 function claimKey(){var k=$("key").value.trim();if(!k){toast("Type the admin key.");return}
