@@ -156,18 +156,64 @@ jobs:
             </item>
           </layer-list>
           XML
+          cat > $R/values/styles.xml <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+            <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+              <item name="windowActionBar">false</item>
+              <item name="windowNoTitle">true</item>
+              <item name="android:windowBackground">@drawable/splash</item>
+            </style>
+            <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
+              <item name="windowActionBar">false</item>
+              <item name="windowNoTitle">true</item>
+              <item name="android:background">@null</item>
+            </style>
+            <style name="AppTheme.NoActionBarLaunch" parent="AppTheme.NoActionBar">
+              <item name="android:background">@drawable/splash</item>
+            </style>
+          </resources>
+          XML
+          mkdir -p $R/values-v31
+          cat > $R/values-v31/styles.xml <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+            <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+              <item name="windowActionBar">false</item>
+              <item name="windowNoTitle">true</item>
+              <item name="android:windowBackground">@drawable/splash</item>
+            </style>
+            <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
+              <item name="windowActionBar">false</item>
+              <item name="windowNoTitle">true</item>
+              <item name="android:background">@null</item>
+            </style>
+            <style name="AppTheme.NoActionBarLaunch" parent="AppTheme.NoActionBar">
+              <item name="android:background">@drawable/splash</item>
+              <item name="android:windowSplashScreenBackground">#FFFFFF</item>
+            </style>
+          </resources>
+          XML
           echo '<?xml version="1.0" encoding="utf-8"?><resources><color name="ic_launcher_background">#FFFFFF</color></resources>' > $R/values/ic_launcher_background.xml
           sed -i 's|android:name=".MainActivity"|android:name=".MainActivity" android:screenOrientation="portrait"|' android/app/src/main/AndroidManifest.xml
           grep -c screenOrientation android/app/src/main/AndroidManifest.xml
           npx cap sync android
 
-      - name: Build the APK
+      - name: Build the release APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleRelease -x lintVitalRelease
+
+      - name: Sign the release APK
+        run: |
+          echo "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" | base64 -d > c3.jks
+          APKSIGNER=$(ls -d $ANDROID_HOME/build-tools/*/apksigner | sort -V | tail -1)
+          UNSIGNED=$(ls android/app/build/outputs/apk/release/*.apk | head -1)
+          $APKSIGNER sign --ks c3.jks --ks-pass pass:C3sna2026rel --key-pass pass:C3sna2026rel --ks-key-alias c3sna --out c3sna-release.apk "$UNSIGNED"
+          $APKSIGNER verify --verbose c3sna-release.apk | head -3
 
       - uses: actions/upload-artifact@v4
         with:
-          name: c3sna-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: c3sna-release-apk
+          path: c3sna-release.apk

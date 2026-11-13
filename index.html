@@ -59,10 +59,10 @@ input,textarea{width:100%;font:inherit;padding:11px;border:1px solid var(--bd);b
 .chips button.on{background:var(--pr);color:var(--pt);border-color:var(--pr)}
 #splash{position:fixed;inset:0;z-index:100;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s ease}
 #splash.out{opacity:0;pointer-events:none}
-#splash .sl{width:180px;height:180px;animation:wipe 1.3s cubic-bezier(.65,.05,.3,1) .15s both}
+#splash .sl{width:180px;height:180px;animation:wipe 1.9s cubic-bezier(.65,.05,.3,1) .2s both}
 @keyframes wipe{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
-#splash .st{margin-top:18px;font:600 15px/1 system-ui,sans-serif;letter-spacing:.24em;text-transform:uppercase;color:#14232e;animation:fadeup .7s ease 1.1s both}
-#splash .ss{margin-top:8px;font:13px/1 system-ui,sans-serif;color:#5b6b77;animation:fadeup .7s ease 1.35s both}
+#splash .st{margin-top:18px;font:600 15px/1 system-ui,sans-serif;letter-spacing:.24em;text-transform:uppercase;color:#14232e;animation:fadeup .8s ease 2s both}
+#splash .ss{margin-top:8px;font:13px/1 system-ui,sans-serif;color:#5b6b77;animation:fadeup .8s ease 2.4s both}
 #splash .sb{position:absolute;bottom:calc(64px + env(safe-area-inset-bottom,0px));width:120px;height:3px;border-radius:3px;background:#e3e9ee;overflow:hidden}
 #splash .sb i{display:block;height:100%;width:40%;border-radius:3px;background:#0f4c5c;animation:slide 1.1s ease-in-out infinite}
 @keyframes slide{from{transform:translateX(-110%)}to{transform:translateX(300%)}}
@@ -425,5 +425,5 @@ return '<div class="card" style="border-left:7px solid '+k+'" data-n="'+esc((x.n
 function filtC(){var q=$("chs").value.toLowerCase();document.querySelectorAll("#chl > .card").forEach(function(e){e.classList.toggle("hide",e.dataset.n.indexOf(q)<0)})}
 function amoreHTML(){return '<h1>More</h1><p class="mu">'+(isMain?'Main admin':'View only')+'</p><div class="card"><h3>Save the report</h3><p class="mu">Save the levy and attendance for all countries.</p>'+exp()+'</div>'+(isMain?'<div class="card"><h3>Share view access</h3><p class="mu">Tap the copy icon, then paste the key to the person who should see admin stats:</p><div class="keybox"><button class="cp" onclick="copyKey()" aria-label="Copy view key">'+ICC+'Copy key</button><b class="sel" style="font-size:22px;letter-spacing:.04em">'+VIEW+'</b></div></div>':'<div class="card"><h3>Share view access</h3><p class="mu">Only the main admin can share the key.</p></div>')+''+(isMain?'<p><button class="btn o" onclick="resetAll()" style="width:100%">Erase all online data</button></p>':'')+'<p><button class="btn o" onclick="signOut()" style="width:100%">Sign out</button></p><p><button class="btn o" onclick="go(\'home\')" style="width:100%">Exit admin</button></p>'+nav(ADM,"m")}
 render("home");
-setTimeout(function(){var e=$("splash");if(e){e.classList.add("out");setTimeout(function(){e.remove()},700)}},2400);
+setTimeout(function(){var e=$("splash");if(e){e.classList.add("out");setTimeout(function(){e.remove()},700)}},3900);
 </script></body></html>
