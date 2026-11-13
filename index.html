@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>C3 SNA</title>
+<style>
+:root{--bg:#f2f5f7;--sf:#fff;--tx:#14232e;--mu:#5b6b77;--pr:#0f4c5c;--pt:#fff;--ac:#e0a100;--bd:#d5dde3;--ok:#1a7f4b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1a22;--sf:#16262f;--tx:#e8eef2;--mu:#9bacb8;--pr:#4fb3c8;--pt:#06222b;--ac:#f0b429;--bd:#2a3e4a;--ok:#4cc790}}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;max-width:560px;margin:0 auto;padding:16px 16px 96px}
+h1{font-size:26px;margin:8px 0 4px}h2{font-size:20px;margin:18px 0 8px}h3{font-size:16px;margin:0 0 6px}
+.mu{color:var(--mu);font-size:14px}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:14px;margin:10px 0}
+.big{display:block;width:100%;text-align:left;border:0;border-radius:16px;padding:22px 18px;margin:10px 0;font:inherit;cursor:pointer}
+.big b{display:block;font-size:20px}.big span{font-size:14px;opacity:.85}
+.b1{background:var(--pr);color:var(--pt)}.b2{background:var(--ac);color:#1b1500}
+button{font:inherit;cursor:pointer}
+.btn{background:var(--pr);color:var(--pt);border:0;border-radius:12px;padding:12px 16px;font-weight:600}
+.btn.o{background:transparent;color:var(--pr);border:1.5px solid var(--pr)}
+.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1}
+label{display:block;font-weight:600;font-size:14px;margin:12px 0 4px}
+input,textarea{width:100%;font:inherit;padding:11px;border:1px solid var(--bd);border-radius:10px;background:var(--sf);color:var(--tx)}
+:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+.tabs{display:flex;gap:6px;margin:12px 0}.tabs button{flex:1;padding:10px 4px;border:1px solid var(--bd);background:var(--sf);color:var(--tx);border-radius:10px;font-weight:600;font-size:14px}
+.tabs button.on{background:var(--pr);color:var(--pt);border-color:var(--pr)}
+.back{background:none;border:0;color:var(--pr);font-weight:600;padding:8px 0}
+.list{border:1px solid var(--bd);border-radius:10px;max-height:190px;overflow:auto;background:var(--sf);margin-top:4px}
+.list div{padding:10px 12px;border-bottom:1px solid var(--bd);cursor:pointer}.list div:last-child{border:0}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}.stat{background:var(--bg);border-radius:10px;padding:10px}
+.stat b{display:block;font-size:20px}.stat span{font-size:13px;color:var(--mu)}
+.levy{background:var(--pr);color:var(--pt);border-radius:12px;padding:12px;margin-top:12px}.levy b{font-size:22px}
+.up{color:var(--ok);font-weight:700}.dn{color:#c0392b;font-weight:700}
+.item{cursor:pointer}.pill{display:inline-block;font-size:12px;border:1px solid var(--bd);border-radius:20px;padding:2px 9px;color:var(--mu)}
+.leg{font-size:12px;color:var(--mu);margin:2px 0 4px}.leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin:0 4px 0 8px;vertical-align:-1px}.leg i:first-child{margin-left:0}
+.ch{display:flex;justify-content:space-between;align-items:center}
+#toast{position:fixed;left:16px;right:16px;bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--tx);color:var(--bg);padding:12px 14px;border-radius:12px;display:none;max-width:528px;margin:0 auto}
+.nav{position:fixed;left:0;right:0;bottom:0;background:var(--sf);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
+.nav div{display:flex;max-width:560px;margin:0 auto}
+.nav button{flex:1;background:none;border:0;padding:9px 2px 7px;color:var(--mu);font-size:12px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.nav svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.nav button.on{color:var(--pr);font-weight:700}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.chips button{border:1px solid var(--bd);background:var(--sf);color:var(--tx);border-radius:20px;padding:7px 12px;font-size:14px}
+.chips button.on{background:var(--pr);color:var(--pt);border-color:var(--pr)}
+.hide{display:none}
+</style></head><body>
+<div id="app"></div><div id="toast"></div>
+<script>
+var CT=[["Zambia","ZMW","Kwacha","ZM"],["Malawi","MWK","Kwacha","MW"],["Zimbabwe","USD","US Dollar","ZW"],["South Africa","ZAR","Rand","ZA"],["Botswana","BWP","Pula","BW"],["Namibia","NAD","Namibian Dollar","NA"],["Mozambique","MZN","Metical","MZ"],["Angola","AOA","Kwanza","AO"],["Tanzania","TZS","Shilling","TZ"],["Lesotho","LSL","Loti","LS"],["Eswatini","SZL","Lilangeni","SZ"],["DR Congo","CDF","Congolese Franc","CD"]];
+var MN=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+var MAIN="C3-ADMIN-2026",VIEW="C3-VIEW-7391",THIS="2026-11",PREV="2026-10";
+var churches=[
+{id:1,name:"C3 Lusaka Central",country:"Zambia",city:"Lusaka",leader:"Pastor Mwansa",contact:"+260 97 000 0001"},
+{id:2,name:"C3 Kitwe",country:"Zambia",city:"Kitwe",leader:"Pastor Banda",contact:"+260 96 000 0002"},
+{id:3,name:"C3 Lilongwe",country:"Malawi",city:"Lilongwe",leader:"Pastor Phiri",contact:"+265 99 000 0003"},
+{id:4,name:"C3 Blantyre",country:"Malawi",city:"Blantyre",leader:"Pastor Chirwa",contact:"+265 88 000 0004"},
+{id:5,name:"C3 Harare",country:"Zimbabwe",city:"Harare",leader:"Pastor Moyo",contact:"+263 77 000 0005"},
+{id:6,name:"C3 Durban",country:"South Africa",city:"Durban",leader:"Pastor Naidoo",contact:"+27 82 000 0006"}];
+function gen(cid,ba,bk,rate,gr,end){var out=[],i=0,t=Date.UTC(2025,0,5),e=Date.parse(end);
+while(t<=e){var a=Math.round(ba+i*gr+7*Math.sin(i*1.7)),k=Math.round(bk+i*gr/3+4*Math.cos(i*1.3));
+out.push({c:cid,d:new Date(t).toISOString().slice(0,10),a:a,k:k,o:Math.round((a+k)*rate*(0.85+0.3*Math.abs(Math.sin(i*2.3)))/10)*10});i++;t+=6048e5}return out}
+var reports=[].concat(gen(1,200,80,80,.3,"2026-11-08"),gen(2,110,45,60,.2,"2026-11-08"),gen(3,140,60,6000,.25,"2026-11-08"),gen(4,80,30,5000,.1,"2026-10-25"),gen(5,160,60,8,.1,"2026-11-08"),gen(6,280,90,200,.4,"2026-11-08"));
+var me=null,isMain=false,sel=null,pers={};
+var KEY="c3sna_v1";
+function save(){try{localStorage.setItem(KEY,JSON.stringify({churches:churches,reports:reports,me:me}))}catch(e){}}
+(function(){try{var d=JSON.parse(localStorage.getItem(KEY)||"null");if(d&&d.churches&&d.reports){churches=d.churches;reports=d.reports;me=d.me||null}}catch(e){}})();
+function resetAll(){if(confirm("Erase all data on this phone and start again?")){try{localStorage.removeItem(KEY)}catch(e){}location.reload()}}
+var $=function(i){return document.getElementById(i)};
+function n(x){return Number(x).toLocaleString("en-US")}
+function cur(c){for(var i=0;i<CT.length;i++)if(CT[i][0]==c)return CT[i];return null}
+function toast(t){var e=$("toast");e.textContent=t;e.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(function(){e.style.display="none"},3500)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function sh(v){return v>=1e6?(v/1e6).toFixed(1)+"M":v>=1e3?(v/1e3).toFixed(v>=1e4?0:1)+"k":String(Math.round(v))}
+function sum(a,f){return a.reduce(function(s,x){return s+f(x)},0)}
+function repsOf(cid){return reports.filter(function(r){return r.c==cid}).sort(function(a,b){return a.d<b.d?-1:1})}
+function inM(cid,m){return repsOf(cid).filter(function(r){return r.d.slice(0,7)==m})}
+function maxAtt(cid,skip){return repsOf(cid).reduce(function(m,r){return r.d==skip?m:Math.max(m,r.a+r.k)},0)}
+function churchAvg(cid,m){var r=inM(cid,m);return r.length?sum(r,function(x){return x.a+x.k})/r.length:0}
+function mk(i){return new Date(Date.UTC(2026,10-i,1)).toISOString().slice(0,7)}
+function mname(m){return MN[+m.slice(5,7)-1]}
+function go(v){sel=null;render(v)}
+function back(){return '<button class="back" onclick="go(\'home\')">‹ Back</button>'}
+var IC={h:'<svg viewBox="0 0 24 24"><path d="M12 3v4M10 5h4"/><path d="M5 21V12l7-5 7 5v9z"/><path d="M10 21v-5h4v5"/></svg>',r:'<svg viewBox="0 0 24 24"><path d="M9 4h6v3H9z"/><path d="M7 5.5H5V20h14V5.5h-2"/><path d="M9 12h6M9 16h4"/></svg>',s:'<svg viewBox="0 0 24 24"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>',g:'<svg viewBox="0 0 24 24"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.5"/><circle cx="8" cy="17" r="2.5"/></svg>',c:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>',m:'<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>'};
+var ADM=[["c","Countries","go('admin')"],["h","Churches","go('achurches')"],["m","More","go('amore')"]];
+function nav(a,cur){return '<nav class="nav"><div>'+a.map(function(i){return '<button class="'+(cur==i[0]?'on':'')+'" onclick="'+i[2]+'">'+IC[i[0]]+i[1]+'</button>'}).join("")+'</div></nav>'}
+var C1="var(--pr)",C2="var(--ac)";
+var CC={ZM:"#1b8a5a",MW:"#c0392b",ZW:"#d68910",ZA:"#2e6fd1",BW:"#7d3c98",NA:"#16a0a8",MZ:"#c2185b",AO:"#8d6e63",TZ:"#558b2f",LS:"#5c6bc0",SZ:"#e67e22",CD:"#00838f"};
+function col(cn){return CC[cur(cn)[3]]}
+/* simple bar chart: one colour, number on every bar, best bar in gold */
+function bars(labels,vals,col,cols){var W=320,H=180,T=24,B=24,len=labels.length,h=H-T-B,mx=Math.max.apply(null,vals.concat([1])),sl=W/len,bw=Math.min(sl*.68,48),bi=len>1?vals.indexOf(Math.max.apply(null,vals)):-1,fs=len>8?9:12,s='<svg viewBox="0 0 320 180" width="100%" role="img">';
+labels.forEach(function(lb,i){var x=sl*i+(sl-bw)/2,bh=Math.max(h*vals[i]/mx,vals[i]?2:0),y=T+h-bh;
+s+='<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+bh.toFixed(1)+'" rx="4" style="fill:'+(cols?cols[i]:(i==bi?C2:col))+'"/>';
+s+='<text x="'+(x+bw/2).toFixed(1)+'" y="'+(y-5).toFixed(1)+'" text-anchor="middle" font-size="'+fs+'" font-weight="600" style="fill:var(--tx)">'+sh(vals[i])+'</text>';
+s+='<text x="'+(x+bw/2).toFixed(1)+'" y="'+(T+h+16)+'" text-anchor="middle" font-size="'+(len>8?10:11)+'" style="fill:var(--mu)">'+lb+'</text>'});
+return s+'<line x1="0" x2="320" y1="'+(T+h)+'" y2="'+(T+h)+'" style="stroke:var(--bd)"/></svg>'}
+function best(L,V,what){var i=V.indexOf(Math.max.apply(null,V));return '<div class="mu">Gold bar = '+what+': '+L[i]+' ('+n(V[i])+')</div>'}
+/* stats panel (church admin and administrator see the same) */
+function paint(cid,host){$(host).innerHTML=panelHTML(cid,host)}
+function setP(cid,p,host){pers[cid]=p;paint(cid,host)}
+function seed(){reports=reports.concat(gen(me.id,110,45,80,.2,"2026-11-08"));save();paint(me.id,"pnC")}
+function panelHTML(cid,host){var c=churches.filter(function(x){return x.id==cid})[0],cu=cur(c.country),p=pers[cid]||"m",all=repsOf(cid);
+var tabs='<div class="tabs">'+[["m","This month"],["l","Last month"],["y","Last year"]].map(function(t){return '<button class="'+(p==t[0]?'on':'')+'" onclick="setP('+cid+',\''+t[0]+'\',\''+host+'\')">'+t[1]+'</button>'}).join("")+'</div>';
+if(!all.length)return tabs+'<div class="card"><p class="mu">No reports yet. Send your first Sunday report to see graphs.</p>'+(host=="pnC"?'<button class="btn o" onclick="seed()">Add sample history (demo only)</button>':'')+'</div>';
+var rs=all.filter(function(r){return p=="y"?r.d.slice(0,4)=="2025":r.d.slice(0,7)==(p=="m"?THIS:PREV)});
+if(!rs.length)return tabs+'<div class="card"><p class="mu">No Sundays reported in this period.</p></div>';
+var L=[],A=[],K=[],O=[];
+if(p=="y"){for(var i=0;i<12;i++){var ms=rs.filter(function(r){return +r.d.slice(5,7)==i+1});L.push(MN[i]);A.push(ms.length?Math.round(sum(ms,function(x){return x.a})/ms.length):0);K.push(ms.length?Math.round(sum(ms,function(x){return x.k})/ms.length):0);O.push(sum(ms,function(x){return x.o}))}}
+else rs.forEach(function(r){L.push(mname(r.d)+" "+(+r.d.slice(8)));A.push(r.a);K.push(r.k);O.push(r.o)});
+var TT=A.map(function(a,i){return a+K[i]}),avg=Math.round(sum(rs,function(x){return x.a+x.k})/rs.length),aA=Math.round(sum(rs,function(x){return x.a})/rs.length),aK=Math.round(sum(rs,function(x){return x.k})/rs.length);
+return tabs+'<div class="stats"><div class="stat"><b>'+n(maxAtt(cid))+'</b><span>Highest attendance ever</span></div><div class="stat"><b>'+n(avg)+'</b><span>Average per Sunday</span></div><div class="stat"><b>'+rs.length+'</b><span>Sundays reported</span></div><div class="stat"><b>'+cu[1]+' '+sh(sum(rs,function(x){return x.o})*.03)+'</b><span>Levy in this period</span></div></div>'
++'<div class="card"><h3>People at church</h3><div class="mu">Adults and children together'+(p=="y"?'. Average per Sunday in each month.':'.')+'</div>'+bars(L,TT,C1)+best(L,TT,p=="y"?"best month":"best Sunday")+'<div class="mu">On average: '+n(aA)+' adults and '+n(aK)+' children</div></div>'
++'<div class="card"><h3>Offering ('+cu[1]+')</h3><div class="mu">'+(p=="y"?'Total for each month.':'Offering on each Sunday.')+'</div>'+bars(L,O,C1)+best(L,O,p=="y"?"best month":"best Sunday")+'</div>'
++(host=="pnC"?'<h3 style="margin:16px 0 6px">Save my church stats</h3>'+exp():'')}
+/* screens */
+function render(v){var h="";
+if(v=="home")h='<h1>C3 Southern Africa</h1><p class="mu">Choose how you want to use the app.</p><button class="big b1" onclick="go(\'alogin\')"><b>Administrator</b><span>See levy and attendance for every country</span></button><button class="big b2" onclick="go(\'church\')"><b>Church Admin</b><span>Enter your church details and Sunday numbers</span></button><p class="mu">Trial version: data is saved on this phone only. No internet needed.</p>';
+if(v=="alogin")h=back()+'<h1>Administrator</h1><p class="mu">Enter your admin key.</p><label for="key">Admin key</label><input id="key" autocomplete="off" placeholder="Example: C3-ADMIN-2026"><p class="mu">Demo keys: C3-ADMIN-2026 (main admin) or C3-VIEW-7391 (shared view key).</p><button class="btn" onclick="login()">Open admin</button>';
+if(v=="church")h=me?back()+'<h1>'+esc(me.name)+'</h1><p class="mu">'+esc(me.city)+', '+esc(me.country)+'</p><div id="ct"></div><div id="nv"></div>':back()+'<h1>Set up your church</h1><p class="mu">You only do this once. You can change it later in Settings.</p><div class="card">'+form(false)+'</div>';
+if(v=="admin")h=adminHome();
+if(v=="country")h=countryView(sel);
+if(v=="amore")h=amoreHTML();
+if(v=="achurches")h=achurchesHTML();
+if(v=="cchurches")h=cchurchesHTML(sel);
+$("app").innerHTML=h;window.scrollTo(0,0);
+if(v=="church"){if(me)ctab("r");else pick($("cc"),$("cl"),function(){})}}
+function form(edit){var m=edit?me:{};return '<label for="cn">Church name</label><input id="cn" value="'+esc(m.name||"")+'"><label for="cc">Country</label><input id="cc" placeholder="Search country" autocomplete="off" value="'+esc(m.country||"")+'"><div id="cl" class="list hide"></div><label for="ci">City</label><input id="ci" value="'+esc(m.city||"")+'"><label for="ln">Leader name</label><input id="ln" value="'+esc(m.leader||"")+'"><label for="lc">Leader contact</label><input id="lc" inputmode="tel" value="'+esc(m.contact||"")+'"><label for="ex">Extra details (optional)</label><textarea id="ex" rows="2">'+esc(m.extra||"")+'</textarea><p><button class="btn" onclick="saveChurch()" style="width:100%">'+(edit?'Save changes':'Save church')+'</button></p>'}
+function pick(inp,list,cb){function show(){var q=inp.value.toLowerCase(),r=CT.filter(function(c){return c[0].toLowerCase().indexOf(q)>-1});list.innerHTML=r.map(function(c){return '<div data-i="'+CT.indexOf(c)+'">'+c[0]+' <span class="mu">('+c[1]+')</span></div>'}).join("")||'<div class="mu">No match</div>';list.classList.remove("hide")}
+inp.onfocus=show;inp.oninput=show;list.onclick=function(e){var d=e.target.closest("[data-i]");if(!d)return;inp.value=CT[d.dataset.i][0];list.classList.add("hide");cb()}}
+function saveChurch(){var m={name:$("cn").value.trim(),country:$("cc").value.trim(),city:$("ci").value.trim(),leader:$("ln").value.trim(),contact:$("lc").value.trim(),extra:$("ex").value.trim()};
+if(!m.name||!cur(m.country)){toast("Enter the church name and pick a country from the list.");return}
+var first=!me;if(me){m.id=me.id;churches=churches.map(function(c){return c.id==m.id?m:c})}else{m.id=Date.now();churches.push(m)}
+me=m;save();toast(first?"Church saved. You will not need to enter this again.":"Changes saved.");render("church");if(!first)ctab("g")}
+function ctab(t){$("nv").innerHTML=nav([["r","Report","ctab('r')"],["s","Stats","ctab('s')"],["g","Settings","ctab('g')"]],t);var c=$("ct");
+if(t=="r"){c.innerHTML=report();calc()}
+if(t=="s"){c.innerHTML='<div id="pnC"></div>';paint(me.id,"pnC")}
+if(t=="g"){c.innerHTML='<div class="card"><h3>My church details</h3>'+form(true)+'</div>';pick($("cc"),$("cl"),function(){})}}
+function report(){var cu=cur(me.country);return '<div class="card"><label for="dt">Sunday date</label><input id="dt" type="date" value="2026-11-08" onchange="calc()"><label for="ad">Number of adults</label><input id="ad" type="number" inputmode="numeric" oninput="calc()"><label for="kd">Number of children</label><input id="kd" type="number" inputmode="numeric" oninput="calc()"><label for="of">Offering ('+cu[2]+', '+cu[1]+')</label><input id="of" type="number" inputmode="decimal" oninput="calc()"><div class="stats" id="cmp" style="margin-top:14px"></div><p id="rec" class="up"></p><p id="dup" class="dn"></p><div class="levy">Levy to C3 (3% of offering)<br><b id="lv"></b></div><p><button id="sb" class="btn" onclick="sendReport()" style="width:100%">Send report</button></p></div>'}
+function calc(){if(!$("cmp"))return;var a=+$("ad").value||0,k=+$("kd").value||0,t=a+k,d=$("dt").value,o=+$("of").value||0,cu=cur(me.country);
+var prev=repsOf(me.id).filter(function(r){return r.d<d}).slice(-1)[0],hi=maxAtt(me.id,d);
+function st(l,v){return '<div class="stat"><b>'+v+'</b><span>'+l+'</span></div>'}
+$("cmp").innerHTML=st("Last Sunday",prev?n(prev.a+prev.k):"–")+st("Today",t?n(t):"–")+'<div class="stat" style="grid-column:1/-1"><b>'+n(Math.max(hi,t))+'</b><span>Highest attendance so far</span></div>';
+$("rec").textContent=t&&hi&&t>hi?"New record! Today is your highest attendance.":"";
+$("lv").textContent=cu[1]+" "+n((o*0.03).toFixed(2));var dup=d&&sent(d),sun=d&&new Date(d+"T00:00:00Z").getUTCDay()==0;$("dup").textContent=dup?"The report for this Sunday is already sent.":(d&&!sun?"This date is not a Sunday.":"");$("sb").disabled=!!(dup||(d&&!sun));$("sb").style.opacity=$("sb").disabled?.5:1}
+function sent(d){return repsOf(me.id).some(function(r){return r.d==d})}
+function sendReport(){var a=+$("ad").value,k=+$("kd").value,o=+$("of").value,d=$("dt").value;
+if(!d||(!a&&!k)){toast("Enter the date and the number of adults and children.");return}
+if(new Date(d+"T00:00:00Z").getUTCDay()!=0){toast("Pick a Sunday date.");return}
+if(sent(d)){toast("You already sent the report for this Sunday.");return}
+reports.push({c:me.id,d:d,a:a,k:k,o:o});save();
+toast("Report sent. The administrator can now see it.");ctab("r")}
+function login(){var k=$("key").value.trim().toUpperCase();if(k==MAIN||k==VIEW){isMain=(k==MAIN);go("admin")}else toast("Wrong key. Check it and try again.")}
+function stats(cn){var cs=churches.filter(function(c){return c.country==cn}),A=0,K=0,O=0,mx=0,sub=0,now=0,pv=0;
+cs.forEach(function(c){var rs=inM(c.id,THIS);if(rs.length){sub++;A+=rs[rs.length-1].a;K+=rs[rs.length-1].k}O+=sum(rs,function(x){return x.o});mx+=maxAtt(c.id);now+=churchAvg(c.id,THIS);pv+=churchAvg(c.id,PREV)});
+return{cs:cs,A:A,K:K,levy:O*.03,mx:mx,sub:sub,g:pv?Math.round((now-pv)/pv*100):null}}
+function usedCt(){return CT.filter(function(c){return churches.some(function(x){return x.country==c[0]})})}
+function exp(){return '<div class="row"><button class="btn o" onclick="dl(\'PDF\')">PDF</button><button class="btn o" onclick="dl(\'Excel\')">Excel</button><button class="btn o" onclick="dl(\'Word\')">Word</button></div>'}
+function adminHome(){var u=usedCt(),S=u.map(function(c){return stats(c[0])});
+return '<h1>Administrator</h1><p class="mu">November 2026 · '+(isMain?'Main admin':'View only')+'</p><div class="card"><h3>People at church, by country</h3><div class="mu">Latest Sunday of the month. Adults and children together.</div>'+bars(u.map(function(c){return c[3]}),S.map(function(s){return s.A+s.K}),C1,u.map(function(c){return col(c[0])}))+'<div class="mu">'+u.map(function(c){return c[3]+" = "+c[0]}).join(", ")+'</div></div><h2>Countries</h2><input id="cs" placeholder="Search country" autocomplete="off" oninput="filt()"><div id="cl2">'+u.map(function(c,i){var s=S[i];return '<div class="card item" style="border-left:7px solid '+col(c[0])+'" data-n="'+c[0].toLowerCase()+'" onclick="sel=\''+c[0]+'\';render(\'country\')"><h3>'+c[0]+' <span class="pill">'+s.cs.length+' churches</span></h3><div class="mu">Levy owed this month</div><b style="font-size:20px">'+c[1]+' '+n(s.levy.toFixed(2))+'</b><div class="mu">'+n(s.A)+' adults · '+n(s.K)+' children</div></div>'}).join("")+'</div>'+nav(ADM,"c")}
+function filt(){var q=$("cs").value.toLowerCase();document.querySelectorAll("#cl2 .item").forEach(function(e){e.classList.toggle("hide",e.dataset.n.indexOf(q)<0)})}
+function dl(t){toast(t+" download is a placeholder in this prototype. It will make a real file in the app.")}
+function tg(cid){var e=$("d"+cid);e.classList.toggle("hide");if(!e.classList.contains("hide"))paint(cid,"pnA"+cid);$("ar"+cid).textContent=e.classList.contains("hide")?"▾":"▴"}
+function countryView(cn){var c=cur(cn),s=stats(cn),ms=[0,1,2,3,4,5].map(function(i){return mk(5-i)}),L=ms.map(mname);
+var att=ms.map(function(m){return Math.round(sum(s.cs,function(x){return churchAvg(x.id,m)}))}),lev=ms.map(function(m){return Math.round(sum(s.cs,function(x){return sum(inM(x.id,m),function(r){return r.o})})*.03)});
+var g=s.g===null?'<span class="mu">no data</span>':'<span class="'+(s.g>=0?'up':'dn')+'">'+(s.g>=0?'+':'')+s.g+'%</span>';
+return '<button class="back" onclick="go(\'admin\')">‹ All countries</button><h1 style="border-left:8px solid '+col(cn)+';padding-left:10px">'+cn+'</h1><p class="mu">November 2026 · '+s.sub+' of '+s.cs.length+' churches have reported</p><div class="levy" style="background:'+col(cn)+';color:#fff">Levy owed to C3 (3%)<br><b>'+c[1]+' '+n(s.levy.toFixed(2))+'</b></div><div class="stats" style="margin-top:10px"><div class="stat"><b>'+n(s.A)+'</b><span>Adults (latest Sundays)</span></div><div class="stat"><b>'+n(s.K)+'</b><span>Children (latest Sundays)</span></div><div class="stat"><b>'+n(s.mx)+'</b><span>Highest attendance (all churches)</span></div><div class="stat"><b>'+g+'</b><span>Growth vs October</span></div></div>'
++'<div class="card"><h3>People at church</h3><div class="mu">Average per Sunday, all churches. Last 6 months.</div>'+bars(L,att,col(cn))+best(L,att,"best month")+'</div><div class="card"><h3>Levy owed ('+c[1]+')</h3><div class="mu">Each month. Last 6 months.</div>'+bars(L,lev,col(cn))+best(L,lev,"highest month")+'</div>'
++'<h2>Churches</h2><p class="mu">Tap a church to see what its church admin sees.</p>'+s.cs.map(function(x){return '<div class="card"><div class="item ch" onclick="tg('+x.id+')"><h3 style="margin:0">'+esc(x.name)+'</h3><span id="ar'+x.id+'">▾</span></div><div id="d'+x.id+'" class="hide"><p class="mu">City: '+esc(x.city)+'<br>Leader: '+esc(x.leader)+'<br>Contact: '+esc(x.contact)+(x.extra?'<br>Notes: '+esc(x.extra):'')+'</p><div id="pnA'+x.id+'"></div></div></div>'}).join("")+nav(ADM,"c")}
+var chF="c";
+function achurchesHTML(){chF="c";var u=usedCt();
+var chips=[["c","Country"],["n","Church name"],["l","Location"],["p","Leader"]].map(function(t){return '<button data-k="'+t[0]+'" class="'+(t[0]=="c"?'on':'')+'" onclick="setF(\''+t[0]+'\')">'+t[1]+'</button>'}).join("");
+var list=churches.slice().sort(function(a,b){return a.name<b.name?-1:1});
+return '<h1>Churches</h1><p class="mu">Choose what to search by, then type.</p><input id="chs" placeholder="Search country" autocomplete="off" oninput="filtA()"><div class="chips" id="fc">'+chips+'</div>'
++'<div id="cl2">'+u.map(function(c){var s=stats(c[0]);return '<div class="card item" style="border-left:7px solid '+col(c[0])+'" data-n="'+c[0].toLowerCase()+'" onclick="sel=\''+c[0]+'\';render(\'cchurches\')"><h3>'+c[0]+' <span class="pill">'+s.cs.length+' churches</span></h3><div class="mu">'+s.sub+' of '+s.cs.length+' reported this month</div></div>'}).join("")+'</div>'
++'<div id="chl" class="hide">'+list.map(function(x){return '<div class="card" style="border-left:7px solid '+col(x.country)+'" data-n="'+esc(x.name.toLowerCase())+'" data-l="'+esc(x.city.toLowerCase())+'" data-p="'+esc(x.leader.toLowerCase())+'"><div class="item ch" onclick="tg('+x.id+')"><div><h3 style="margin:0">'+esc(x.name)+'</h3><div class="mu">'+esc(x.city)+', '+esc(x.country)+'</div><div class="mu">Leader: '+esc(x.leader)+'</div></div><span id="ar'+x.id+'">▾</span></div><div id="d'+x.id+'" class="hide"><p class="mu">Contact: '+esc(x.contact)+(x.extra?'<br>Notes: '+esc(x.extra):'')+'</p><div id="pnA'+x.id+'"></div></div></div>'}).join("")+'</div>'
++'<p id="nm" class="mu hide">No match. Try another word or another filter.</p>'+nav(ADM,"h")}
+function setF(k){chF=k;document.querySelectorAll("#fc button").forEach(function(b){b.classList.toggle("on",b.dataset.k==k)});$("chs").placeholder={c:"Search country",n:"Search church name",l:"Search city or location",p:"Search leader name"}[k];filtA()}
+function filtA(){var q=$("chs").value.toLowerCase().trim(),isC=chF=="c",vis=0;$("cl2").classList.toggle("hide",!isC);$("chl").classList.toggle("hide",isC);
+document.querySelectorAll(isC?"#cl2 > .card":"#chl > .card").forEach(function(e){var h=e.dataset[isC?"n":chF].indexOf(q)<0;e.classList.toggle("hide",h);if(!h)vis++});$("nm").classList.toggle("hide",vis>0)}
+function cchurchesHTML(cn){var c=cur(cn),s=stats(cn),k=col(cn);
+var lb=s.cs.map(function(x){return x.city.slice(0,6)}),vl=s.cs.map(function(x){return Math.round(churchAvg(x.id,THIS))});
+return '<button class="back" onclick="go(\'achurches\')">‹ All countries</button><h1 style="border-left:8px solid '+k+';padding-left:10px">'+cn+'</h1><p class="mu">November 2026 · '+s.sub+' of '+s.cs.length+' churches have reported</p>'
++'<div class="card" style="border-left:7px solid '+k+'"><h3>Churches compared</h3><div class="mu">Average people per Sunday this month</div>'+bars(lb,vl,k,vl.map(function(){return k}))+'</div>'
++'<input id="chs" placeholder="Search churches" autocomplete="off" oninput="filtC()"><div id="chl">'+s.cs.map(function(x){var av=Math.round(churchAvg(x.id,THIS)),lv=sum(inM(x.id,THIS),function(r){return r.o})*.03;
+return '<div class="card" style="border-left:7px solid '+k+'" data-n="'+esc((x.name+" "+x.city+" "+x.leader).toLowerCase())+'"><div class="item ch" onclick="tg('+x.id+')"><div><h3 style="margin:0">'+esc(x.name)+'</h3><div class="mu">'+esc(x.city)+'</div><div class="mu">'+(av?n(av)+' people per Sunday · Levy '+c[1]+' '+n(lv.toFixed(2)):'Not reported this month')+'</div></div><span id="ar'+x.id+'">▾</span></div><div id="d'+x.id+'" class="hide"><p class="mu">Leader: '+esc(x.leader)+'<br>Contact: '+esc(x.contact)+(x.extra?'<br>Notes: '+esc(x.extra):'')+'</p><div id="pnA'+x.id+'"></div></div></div>'}).join("")+'</div>'+nav(ADM,"h")}
+function filtC(){var q=$("chs").value.toLowerCase();document.querySelectorAll("#chl > .card").forEach(function(e){e.classList.toggle("hide",e.dataset.n.indexOf(q)<0)})}
+function amoreHTML(){return '<h1>More</h1><p class="mu">'+(isMain?'Main admin':'View only')+'</p><div class="card"><h3>Save the report</h3><p class="mu">Save the levy and attendance for all countries.</p>'+exp()+'</div>'+(isMain?'<div class="card"><h3>Share view access</h3><p class="mu">Give this key to a person who should see admin stats:</p><b style="font-size:20px">'+VIEW+'</b></div>':'<div class="card"><h3>Share view access</h3><p class="mu">Only the main admin can share the key.</p></div>')+'<p><button class="btn o" onclick="resetAll()" style="width:100%">Reset demo data</button></p><p><button class="btn o" onclick="go(\'home\')" style="width:100%">Exit admin</button></p>'+nav(ADM,"m")}
+render("home");
+</script></body></html>
