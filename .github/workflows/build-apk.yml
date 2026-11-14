@@ -197,7 +197,8 @@ jobs:
           echo '<?xml version="1.0" encoding="utf-8"?><resources><color name="ic_launcher_background">#FFFFFF</color></resources>' > $R/values/ic_launcher_background.xml
           sed -i 's|android:name=".MainActivity"|android:name=".MainActivity" android:screenOrientation="portrait"|' android/app/src/main/AndroidManifest.xml
           grep -c screenOrientation android/app/src/main/AndroidManifest.xml
-          sed -i 's/versionCode [0-9]*/versionCode 3/; s/versionName "[^"]*"/versionName "2.1"/' android/app/build.gradle
+          VC=$(( $(date +%s) / 60 ))
+          sed -i "s/versionCode [0-9]*/versionCode $VC/; s/versionName \"[^\"]*\"/versionName \"2.2\"/" android/app/build.gradle
           grep -n "versionCode\|versionName" android/app/build.gradle
           npx cap sync android
 
