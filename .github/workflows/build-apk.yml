@@ -26,7 +26,7 @@ jobs:
           cp index.html www/index.html
           npm init -y
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/filesystem@6 @capacitor/share@6 @capacitor/app@6
-          echo '{"appId":"com.jovakafor.c3sna","appName":"C3 SNA","webDir":"www","backgroundColor":"#ffffff"}' > capacitor.config.json
+          echo '{"appId":"com.jovakafor.c3sna","appName":"C3 SNA","webDir":"www","backgroundColor":"#1c1f24"}' > capacitor.config.json
           npx cap add android
 
       - name: Folder picker, app icon and loading screen
@@ -151,7 +151,7 @@ jobs:
           <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
             <item>
               <shape android:shape="rectangle">
-                <solid android:color="#FFFFFF"/>
+                <solid android:color="#1C1F24"/>
               </shape>
             </item>
           </layer-list>
@@ -163,11 +163,17 @@ jobs:
               <item name="windowActionBar">false</item>
               <item name="windowNoTitle">true</item>
               <item name="android:windowBackground">@drawable/splash</item>
+              <item name="android:statusBarColor">#1C1F24</item>
+              <item name="android:navigationBarColor">#1C1F24</item>
+              <item name="android:windowLightStatusBar">false</item>
             </style>
             <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
               <item name="windowActionBar">false</item>
               <item name="windowNoTitle">true</item>
               <item name="android:background">@null</item>
+              <item name="android:statusBarColor">#1C1F24</item>
+              <item name="android:navigationBarColor">#1C1F24</item>
+              <item name="android:windowLightStatusBar">false</item>
             </style>
             <style name="AppTheme.NoActionBarLaunch" parent="AppTheme.NoActionBar">
               <item name="android:background">@drawable/splash</item>
@@ -182,15 +188,21 @@ jobs:
               <item name="windowActionBar">false</item>
               <item name="windowNoTitle">true</item>
               <item name="android:windowBackground">@drawable/splash</item>
+              <item name="android:statusBarColor">#1C1F24</item>
+              <item name="android:navigationBarColor">#1C1F24</item>
+              <item name="android:windowLightStatusBar">false</item>
             </style>
             <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
               <item name="windowActionBar">false</item>
               <item name="windowNoTitle">true</item>
               <item name="android:background">@null</item>
+              <item name="android:statusBarColor">#1C1F24</item>
+              <item name="android:navigationBarColor">#1C1F24</item>
+              <item name="android:windowLightStatusBar">false</item>
             </style>
             <style name="AppTheme.NoActionBarLaunch" parent="AppTheme.NoActionBar">
               <item name="android:background">@drawable/splash</item>
-              <item name="android:windowSplashScreenBackground">#FFFFFF</item>
+              <item name="android:windowSplashScreenBackground">#1C1F24</item>
             </style>
           </resources>
           XML
@@ -198,7 +210,7 @@ jobs:
           sed -i 's|android:name=".MainActivity"|android:name=".MainActivity" android:screenOrientation="portrait"|' android/app/src/main/AndroidManifest.xml
           grep -c screenOrientation android/app/src/main/AndroidManifest.xml
           VC=$(( $(date +%s) / 60 ))
-          sed -i "s/versionCode [0-9]*/versionCode $VC/; s/versionName \"[^\"]*\"/versionName \"2.4\"/" android/app/build.gradle
+          sed -i "s/versionCode [0-9]*/versionCode $VC/; s/versionName \"[^\"]*\"/versionName \"3.0\"/" android/app/build.gradle
           grep -n "versionCode\|versionName" android/app/build.gradle
           npx cap sync android
 
