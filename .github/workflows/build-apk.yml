@@ -210,7 +210,7 @@ jobs:
           sed -i 's|android:name=".MainActivity"|android:name=".MainActivity" android:screenOrientation="portrait"|' android/app/src/main/AndroidManifest.xml
           grep -c screenOrientation android/app/src/main/AndroidManifest.xml
           VC=$(( $(date +%s) / 60 ))
-          sed -i "s/versionCode [0-9]*/versionCode $VC/; s/versionName \"[^\"]*\"/versionName \"3.0\"/" android/app/build.gradle
+          sed -i "s/versionCode [0-9]*/versionCode $VC/; s/versionName \"[^\"]*\"/versionName \"3.3\"/" android/app/build.gradle
           grep -n "versionCode\|versionName" android/app/build.gradle
           npx cap sync android
 
